@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Medidor de Umidade IoT</title>
+  <!-- Inclua o Bootstrap via CDN -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css">
+  <!-- Inclua o Chart.js via CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .humidity-meter {
+      position: relative;
+      width: 350px; /* Ajuste conforme necessário */
+      height: 400px; /* Ajuste conforme necessário */
+      border: 2px solid #333;
+      overflow: hidden;
+      border-radius: 15px; /* Borda arredondada */
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1); /* Sombra */
+    }
+
+    .humidity-fill {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background-color: #3498db;
+      transition: height 0.5s;
+      border-bottom-left-radius: 15px; /* Borda arredondada na parte inferior esquerda */
+      border-bottom-right-radius: 15px; /* Borda arredondada na parte inferior direita */
+    }
+
+    .humidity-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 24px; /* Ajuste conforme necessário */
+      color: #333;
+    }
+
+    /* Estilo para o contêiner do gráfico de pizza */
+    .chart-container {
+      width: 300px; /* Ajuste conforme necessário */
+      height: 300px; /* Ajuste conforme necessário */
+      margin: 20px auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="container mt-5">
+    <h1 class="text-center">Medidor de Umidade IoT</h1>
+
+    <!-- Container do medidor de umidade -->
+    <div class="humidity-meter mx-auto">
+      <!-- Preenchimento do medidor de umidade -->
+      <div class="humidity-fill" id="humidityFill"></div>
+
+      <!-- Texto exibindo a porcentagem -->
+      <div class="humidity-text" id="humidityText">0%</div>
+    </div>
+
+    <!-- Contêiner do gráfico de pizza -->
+    <div class="chart-container mx-auto">
+      <canvas id="humidityChart"></canvas>
+    </div>
+  </div>
+
+  <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+  <script>
+    const socket = io();
+
+    // Obtém referências aos elementos HTML
+    const humidityFill = document.getElementById('humidityFill');
+    const humidityText = document.getElementById('humidityText');
+    const humidityChart = document.getElementById('humidityChart').getContext('2d');
+
+    // Inicializa o gráfico de pizza
+    const chart = new Chart(humidityChart, {
+      type: 'doughnut',
+      data: {
+        labels: ['Umidade', 'Seco'],
+        datasets: [{
+          data: [0, 100],
+          backgroundColor: ['#3498db', '#ecf0f1'],
+        }],
+      },
+      options: {
+        cutoutPercentage: 80, // Define o tamanho do buraco no meio do gráfico
+        responsive: true,
+      },
+    });
+
+    socket.on('mqttMessage', (humidity) => {
+      humidity = Number(humidity);
+      // Atualiza a altura do preenchimento e o texto com base na umidade recebida
+      humidityFill.style.height = `${humidity}%`;
+      humidityText.textContent = `${humidity}% Umidade`;
+
+      // Atualiza os dados do gráfico de pizza
+      chart.data.datasets[0].data = [humidity, 100 - humidity];
+      chart.update();
+    });
+  </script>
+
+  <!-- Inclua o Bootstrap JavaScript e o Popper.js, necessários para alguns componentes do Bootstrap -->
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js"></script>
+</body>
+</html>
